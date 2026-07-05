@@ -1,0 +1,36 @@
+# Environment variables / secrets
+.env
+.env.*
+!.env.example
+
+# n8n local runtime files
+.n8n/
+n8n_data/
+*.sqlite
+*.sqlite3
+
+# Node (in case you add any helper scripts/tools later)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# Python (in case you add any helper scripts later)
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# OS / editor junk
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+
+# Exported credentials / backups (never commit real n8n credential exports)
+credentials.json
+*.credentials.json
+backup/
