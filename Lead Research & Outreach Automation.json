@@ -1,0 +1,489 @@
+{
+  "name": "Lead Research & Outreach Automation - Himani Hassija",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1312,
+        16
+      ],
+      "id": "24c9bbd8-f7f6-45c9-aca4-9d1a811137c1",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "mode": "list",
+          "cachedResultName": "Leads Sheet",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SHEET_ID/edit"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SHEET_ID/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -1120,
+        16
+      ],
+      "id": "acac715a-3762-492e-8ea4-8bfeaedf5888",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YOUR_GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "key",
+              "value": "YOUR_GEMINI_API_KEY"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ ({\n  contents: [\n    {\n      parts: [\n        {\n          text: `You are a senior B2B growth strategist for [Your Company Name].\n\n[Your Company Name] is not an agency. It is an embedded growth and marketing pod for ambitious startups and growth-stage companies. [Your Company Name] works inside the client's workflows/OKRs like an internal growth team and owns execution across paid acquisition, SEO, content, lifecycle/email, social, positioning, automation, and GTM systems.\n\nPosition [Your Company Name] as: the growth co-founder/team the company has not hired yet — fast, embedded, execution-led, and cheaper than building a full in-house team.\n\nCompany Name:\n${$('Get row(s) in sheet').item.json['Company Name']}\n\nWebsite:\n${$('Get row(s) in sheet').item.json['Website']}\n\nFirst Name:\n${$('Get row(s) in sheet').item.json['First Name'] || 'Not provided'}\n\nTitle:\n${$('Get row(s) in sheet').item.json['Title'] || 'Not provided'}\n\nManual ICP:\n${$('Get row(s) in sheet').item.json['ICP'] || 'Not provided'}\n\nMarket Signal:\n${$('Get row(s) in sheet').item.json['Market Signal'] || 'Not provided'}\n\nWebsite Research:\n${$('Clean Website Text').item.json['website_text'] || 'Not provided'}\n\nSocial Links:\n${$('Prepare Social Links').item.json['social_links'] || 'Not provided'}\n\nAnalyze the company and infer:\n- ICP\n- company summary\n- likely pain points\n- where [Your Company Name] can help\n\nOutreach rules:\n- Use First Name if available.\n- Tailor to Title if available.\n- Use Market Signal naturally only if relevant.\n- Reference at most ONE specific observation.\n- Keep email concise, human, operator-to-operator, non-salesy.\n- Avoid buzzwords, fake names, placeholders, and generic agency language.\n- Position [Your Company Name] as an embedded growth pod, not an agency.\n- End with a soft CTA for a brief 15-minute conversation next week.\n- End exactly with:\n\nBest,\n[Your Company] Growth Division\n\nReturn ONLY valid JSON:\n{\n  \"generated_icp\": \"Ideal customer profile inferred from research\",\n  \"company_summary\": \"3-5 line summary based on research\",\n  \"pain_points\": \"Specific likely pain points inferred from research\",\n  \"outreach_draft\": \"Personalized outreach email\"\n}\n`\n        }\n      ]\n    }\n  ]\n}) }}",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 10000
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -288,
+        16
+      ],
+      "id": "0759abd7-1cb9-4f07-897e-0f71671bcfbc",
+      "name": "HTTP Request",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c3e9e9d8-9c21-428a-af84-408ec2e82ea2",
+              "name": "=company_summary",
+              "value": "={{ JSON.parse($json[\"candidates\"][0][\"content\"][\"parts\"][0][\"text\"].replace(/```json|```/g, \"\").trim()).company_summary }}",
+              "type": "string"
+            },
+            {
+              "id": "a953e576-4eb8-4317-a069-7574fecbe653",
+              "name": "=pain_points",
+              "value": "={{ JSON.parse($json[\"candidates\"][0][\"content\"][\"parts\"][0][\"text\"].replace(/```json|```/g, \"\").trim()).pain_points }}",
+              "type": "string"
+            },
+            {
+              "id": "a7c5b5f9-be1e-4e7d-8297-b58d42768bc9",
+              "name": "=outreach_draft",
+              "value": "={{ JSON.parse($json[\"candidates\"][0][\"content\"][\"parts\"][0][\"text\"].replace(/```json|```/g, \"\").trim()).outreach_draft }}",
+              "type": "string"
+            },
+            {
+              "id": "af94924e-4bf7-4098-b328-47b02426d5d3",
+              "name": "row_number",
+              "value": "={{ $('Get row(s) in sheet').item.json['row_number'] }}",
+              "type": "string"
+            },
+            {
+              "id": "02072f78-d8d3-4523-92a9-2c7c328cdfbe",
+              "name": "generated_icp",
+              "value": "={{ JSON.parse($json[\"candidates\"][0][\"content\"][\"parts\"][0][\"text\"].replace(/```json|```/g, \"\").trim()).generated_icp }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        0,
+        0
+      ],
+      "id": "640a3097-66d8-4b9f-b6e3-3e1951b74551",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "mode": "list",
+          "cachedResultName": "Leads Sheet",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SHEET_ID/edit"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SHEET_ID/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Outreach Draft": "={{$json[\"outreach_draft\"]}}",
+            "Company Summary": "={{$json[\"company_summary\"]}}",
+            "Pain Points": "={{$json[\"pain_points\"]}}",
+            "row_number": "={{ $('Get row(s) in sheet').item.json[\"row_number\"] }}",
+            "Generated ICP": "={{$json[\"generated_icp\"]}}"
+          },
+          "matchingColumns": [
+            "row_number"
+          ],
+          "schema": [
+            {
+              "id": "Company\n Name",
+              "displayName": "Company\n Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Website",
+              "displayName": "Website",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ICP",
+              "displayName": "ICP",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "LinkedIn",
+              "displayName": "LinkedIn",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Founder's LinkedIn",
+              "displayName": "Founder's LinkedIn",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Twitter",
+              "displayName": "Twitter",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Facebook",
+              "displayName": "Facebook",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Generated ICP",
+              "displayName": "Generated ICP",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Company Summary",
+              "displayName": "Company Summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Pain Points",
+              "displayName": "Pain Points",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Outreach Draft",
+              "displayName": "Outreach Draft",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        112,
+        224
+      ],
+      "id": "def95a0b-571f-4689-a5f6-46a91269152d",
+      "name": "Update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YOUR_GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ \n$('Get row(s) in sheet').item.json['Website'].startsWith('http')\n? $('Get row(s) in sheet').item.json['Website']\n: 'https://' + $('Get row(s) in sheet').item.json['Website']\n}}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -944,
+        16
+      ],
+      "id": "9720462f-b012-43c3-ad1f-cdf27c79ba20",
+      "name": "Website research",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const html = $json.data || '';\n\nconst cleaned = html\n  .replace(/<script[\\s\\S]*?<\\/script>/gi, '')\n  .replace(/<style[\\s\\S]*?<\\/style>/gi, '')\n  .replace(/<[^>]+>/g, ' ')\n  .replace(/\\s+/g, ' ')\n  .trim();\n\nreturn {\n  website_text: cleaned.slice(0, 800)\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -640,
+        16
+      ],
+      "id": "b9445c1b-0589-4a5c-b1d5-f7ebe27ddf53",
+      "name": "Clean Website Text"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ea5e29f8-6ed2-49b7-97d1-bbaf58a7d498",
+              "name": "social_links",
+              "value": "={{ `\nLinkedIn:\n${$('Get row(s) in sheet').item.json['LinkedIn'] || ''}\n\nFounder LinkedIn:\n${$('Get row(s) in sheet').item.json[\"Founder's LinkedIn\"] || ''}\n\nTwitter:\n${$('Get row(s) in sheet').item.json['Twitter'] || ''}\n\nFacebook:\n${$('Get row(s) in sheet').item.json['Facebook'] || ''}\n` }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -464,
+        16
+      ],
+      "id": "cff56dc0-8017-41b6-81d1-721462551038",
+      "name": "Prepare Social Links"
+    },
+    {
+      "parameters": {
+        "fromEmail": "outreach@yourcompany.com",
+        "toEmail": "={{ $('Get row(s) in sheet').item.json['Email'] }}",
+        "subject": "={{ $json[\"Outreach Draft\"].match(/Subject:\\s*(.*)/)?.[1] || \"Growth opportunity\" }}",
+        "emailFormat": "text",
+        "text": "={{ $json[\"Outreach Draft\"] }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        320,
+        224
+      ],
+      "id": "9a86786b-1b72-483a-8dae-db7cf1b2e8ff",
+      "name": "Send an Email",
+      "webhookId": "YOUR_WEBHOOK_ID",
+      "credentials": {
+        "smtp": {
+          "id": "m2SI9qZETS8CnmSL",
+          "name": "SMTP account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Website research",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Website research": {
+      "main": [
+        [
+          {
+            "node": "Clean Website Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clean Website Text": {
+      "main": [
+        [
+          {
+            "node": "Prepare Social Links",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Social Links": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Send an Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "60ba0e7b-bcd1-4d48-b3b7-c482f5a6e677",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "YOUR_N8N_INSTANCE_ID"
+  },
+  "id": "YyAxm8E5LrIHjN35",
+  "tags": []
+}
