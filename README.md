@@ -106,7 +106,7 @@ Contributions are welcome. If you have ideas for improving the workflow or addin
 This project is available under the MIT License.
 
 ## Author
-
+ 
 **Himani Hassija**
 
 B.Tech in Computer Science and Engineering
