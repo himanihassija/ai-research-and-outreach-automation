@@ -2,7 +2,7 @@
 
 An AI powered workflow that automates the complete research and outreach process from discovering organizations and identifying decision makers to generating personalized outreach messages using large language models.
 
-The project is designed to reduce repetitive manual work involved in sponsorship outreach, partnership building, internship applications, research collaboration, and business development.
+The project is designed to reduce repetitive manual work involved in sponsorship outreach, partnership building, internship applications, research collaboration, and business development.                
 
 ## Features
 
