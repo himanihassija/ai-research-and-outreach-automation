@@ -73,7 +73,7 @@ Lead Export
 * Sales prospecting
 * Community outreach
 
-## How It Works
+## How It Works            
 
 The workflow automates the process of researching organizations and preparing personalized outreach.
 
